@@ -1,4 +1,4 @@
-# Data Engineering Career Roadmap — Zero to Job-Ready (GCP Track)
+# Data Engineering Career Roadmap — Zero to Professional (GCP Track)
 
 **Starting point:** Basic Python  
 **Target:** Job-ready Data Engineer, GCP-focused  
