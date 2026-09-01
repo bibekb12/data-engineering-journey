@@ -13,7 +13,7 @@ This document is both your **study plan** and your **GitHub portfolio blueprint*
 Don't cram everything into one repo. Use **one hub repo + separate project repos**. This is what an experienced recruiter/tech lead expects to see on a profile.
 
 ```
-github.com/yourname/
+github.com/bibekb12/
 │
 ├── data-engineering-journey/     ← THE HUB REPO (this file lives here)
 │   ├── README.md                 ← Your roadmap, progress tracker, links to all projects
