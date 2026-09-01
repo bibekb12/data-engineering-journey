@@ -290,4 +290,6 @@ revenue,
   ) as difference_revenue
 from
   month_revenue
-ORDER BY months
+ORDER BY months;
+
+
