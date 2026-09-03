@@ -17,53 +17,52 @@ phase-03-data-modeling/
 ```
 ## ARCHITECURE
 ```
-                    ┌───────────────┐
-                    │   dim_date    │
-                    │───────────────│
-                    │ date_key (PK) │
-                    │ full_date     │
-                    │ day           │
-                    │ month         │
-                    │ quarter       │
-                    │ year          │
-                    └───────┬───────┘
-                            │
-                            │
-┌─────────────────┐         │         ┌─────────────────┐
-│  dim_customer   │         │         │   dim_product   │
-│─────────────────│         │         │─────────────────│
-│ customer_key PK │         │         │ product_key PK  │
-│ customer_id     │         │         │ product_id      │
-│ customer_name   │         │         │ product_category│
-│ state           │         │         │ dimensions      │
-│ city            │         │         │                 │
-└────────┬────────┘         │         └────────┬────────┘
-         │                  │                  │
-         │                  │                  │
-         │          ┌───────▼────────┐         │
-         └─────────►│fact_order_item │◄────────┘
-                    │────────────────│
-                    │ order_id       │
-                    │ order_item_id  │
-                    │ customer_key   │
-                    │ product_key    │
-                    │ seller_key     │
-                    │ order_date_key │
-                    │ price          │
-                    │ freight_value  │
-                    └───────┬────────┘
-                            │
-                            │
-                    ┌───────▼───────┐
-                    │   dim_seller  │
-                    │───────────────│
-                    │ seller_key PK │
-                    │ seller_id     │
-                    │ seller_name   │
-                    │ city          │
-                    │ state         │
-                    │ zip_prefix    │
-                    └───────────────┘
+                                           ┌───────────────┐
+                                           │   dim_date    │
+                                           │───────────────│
+                                           │ date_key (PK) │
+                                           │ full_date     │
+                                           │ day           │
+                                           │ month         │
+                                           │ quarter       │
+                                           │ year          │
+                                           └───────┬───────┘                                                               │
+                                                   │
+                       ┌─────────────────┐         │         ┌─────────────────┐
+                       │  dim_customer   │         │         │   dim_product   │
+                       │─────────────────│         │         │─────────────────│
+                       │ customer_key PK │         │         │ product_key PK  │
+                       │ customer_id     │         │         │ product_id      │
+                       │ customer_name   │         │         │ product_category│
+                       │ state           │         │         │ dimensions      │
+                       │ city            │         │         │                 │
+                       └────────┬────────┘         │         └────────┬────────┘
+                                │                  │                  │
+                                │                  │                  │
+                                │           ┌───────▼────────┐         │
+                                └─────────► │fact_order_item │◄────────┘
+                                            │────────────────│
+                                            │ order_id       │
+                                            │ order_item_id  │
+                                            │ customer_key   │
+                                            │ product_key    │
+                                            │ seller_key     │
+                                            │ order_date_key │
+                                            │ price          │
+                                            │ freight_value  │
+                                            └───────┬────────┘
+                                                    │
+                                                    │
+                                            ┌───────▼───────┐
+                                            │   dim_seller  │
+                                            │───────────────│
+                                            │ seller_key PK │
+                                            │ seller_id     │
+                                            │ seller_name   │
+                                            │ city          │
+                                            │ state         │
+                                            │ zip_prefix    │
+                                            └───────────────┘
 ```
 ## Data Loading Process
 
