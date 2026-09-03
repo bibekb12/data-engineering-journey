@@ -4,7 +4,7 @@
 ```md
 # Data Warehouse Design
 
-[Olist Data Warehouse ERD](diagrams/olist_star_schema.png)
+![Olist Datawarehouse ERD](https://github.com/bibekb12/data-engineering-journey/blob/main/phase-03-data_modeling_and_warehousing/diagrams/olist_star_schema.png)
 
 ## 1. Overview
 
