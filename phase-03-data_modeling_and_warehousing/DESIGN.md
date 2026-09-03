@@ -4,7 +4,7 @@
 ```md
 # Data Warehouse Design
 
-![Olist Data Warehouse ERD](diagrams/olist_star_schema.png)
+[Olist Data Warehouse ERD](diagrams/olist_star_schema.png)
 
 ## 1. Overview
 
