@@ -16,6 +16,7 @@ phase-03-data-modeling/
     └── load_warehouse.py
 ```
 ## ARCHITECURE
+```
                     ┌───────────────┐
                     │   dim_date    │
                     │───────────────│
@@ -63,7 +64,7 @@ phase-03-data-modeling/
                     │ state         │
                     │ zip_prefix    │
                     └───────────────┘
-
+```
 ## Data Loading Process
 
 The Python ETL script performs the following steps:
