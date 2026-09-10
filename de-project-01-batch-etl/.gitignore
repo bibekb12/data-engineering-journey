@@ -1,4 +1,28 @@
+# Environment / secrets
 .env
-.vscode
+.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+
+# Airflow
 logs/
-target/
+airflow/logs/
+airflow.cfg
+
+# dbt generated files
+dbt/**/target/
+dbt/**/logs/
+dbt/**/dbt_packages/
+
+# Local data
+*.parquet
+
+# OS / editor files
+.DS_Store
+.vscode/
+.idea/

@@ -3,29 +3,31 @@ import logging
 import pandas as pd
 
 from airflow import DAG
+from airflow.models import Variable
 from airflow.providers.standard.operators.python import PythonOperator
 from airflow.providers.standard.operators.bash import BashOperator
 
-from ingestion.extract_weather import (
-    extract_weather_to_parquet,
-)
+from ingestion.extract_weather import extract_weather_to_parquet
 from ingestion.load_postgres import load_raw_weather
 
 logger = logging.getLogger(__name__)
 
-LATITUDE = 27.7
-LONGITUDE = 85.3
+LATITUDE = float(Variable.get("weather_latitude"))
+LONGITUDE = float(Variable.get("weather_longitude"))
 
 RAW_FILE = "/opt/airflow/data/weather_raw.parquet"
 
 
 def task_failure_callback(context):
     task_instance = context["task_instance"]
+    exception = context.get("exception")
 
     logger.error(
-        "Task failed: dag_id=%s, task_id=%s",
+        "Task failed: dag_id=%s, task_id=%s, try_number=%s, exception=%s",
         task_instance.dag_id,
         task_instance.task_id,
+        task_instance.try_number,
+        exception,
     )
 
 
@@ -50,7 +52,7 @@ def extract():
 def load_weather(**context):
     file_path = context["ti"].xcom_pull(task_ids="extract")
     logger.info(
-        "Readinge extract file: %s",
+        "Reading extract file: %s",
         file_path,
     )
     df = pd.read_parquet(file_path)
@@ -59,7 +61,7 @@ def load_weather(**context):
         lat=LATITUDE,
         lon=LONGITUDE,
     )
-    logger.info("Weather loading task started")
+    logger.info("Weather loading task completed")
 
 
 default_args = {

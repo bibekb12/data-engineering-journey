@@ -87,7 +87,8 @@ def load_raw_weather(
             result = connection.execute(insert_sql, records)
 
         logger.info(
-            "Weather loading completed successfully. %d rows inserted.",
+            "Weather loading completed. Input rows=%d, inserted rows=%d",
+            len(records),
             result.rowcount,
         )
 
