@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    database: warehouse
+
+    tables:
+      - name: weather
+        columns:
+          - name: timestamp
+            tests:
+              - not_null
+          - name: latitude
+            tests:
+              - not_null
+          - name: longitude
+            tests:
+              - not_null
+          - name: temperature_c
+            tests:
+              - not_null

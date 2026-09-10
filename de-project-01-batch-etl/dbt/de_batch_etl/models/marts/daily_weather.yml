@@ -1,0 +1,35 @@
+version: 2
+
+models:
+  - name: daily_weather
+    description: "Daily weather summary by location."
+
+    columns:
+      - name: weather_date
+        description: "Date of the weather observations."
+        tests:
+          - not_null
+
+      - name: latitude
+        tests:
+          - not_null
+
+      - name: longitude
+        tests:
+          - not_null
+
+      - name: avg_temperature_c
+        tests:
+          - not_null
+
+      - name: min_temperature_c
+        tests:
+          - not_null
+
+      - name: max_temperature_c
+        tests:
+          - not_null
+
+      - name: observation_count
+        tests:
+          - not_null

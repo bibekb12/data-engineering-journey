@@ -36,7 +36,11 @@ def extract():
         LATITUDE,
         LONGITUDE,
     )
-    return extract_weather_to_parquet(lat=LATITUDE, lon=LONGITUDE, output_path=RAW_FILE)
+    return extract_weather_to_parquet(
+        lat=LATITUDE,
+        lon=LONGITUDE,
+        output_path=RAW_FILE,
+    )
 
 
 # def load_raw():
@@ -84,12 +88,12 @@ with DAG(
 
     dbt_run = BashOperator(
         task_id="dbt_run",
-        bash_command="cd /opt/airflow/dbt/de_batch_etl && dbt run",
+        bash_command="cd /opt/airflow/dbt/de_batch_etl && dbt run --profiles-dir .",
     )
 
     dbt_test = BashOperator(
         task_id="dbt_test",
-        bash_command="cd /opt/airflow/dbt/de_batch_etl && dbt test",
+        bash_command="cd /opt/airflow/dbt/de_batch_etl && dbt test --profiles-dir .",
     )
 
     extract_task >> load_task >> dbt_run >> dbt_test

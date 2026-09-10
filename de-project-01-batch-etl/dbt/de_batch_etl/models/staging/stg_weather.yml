@@ -1,0 +1,33 @@
+version: 2
+
+models:
+
+- name: stg_weather
+  description: "Cleaned weather data from the raw weather source."
+
+  columns:
+
+    - name: timestamp
+      description: "Timestamp of the weather observation."
+      tests:
+        - not_null
+
+    - name: temperature_c
+      description: "Temperature in degrees Celsius."
+      tests:
+        - not_null
+
+    - name: latitude
+      description: "Latitude of the weather location."
+      tests:
+        - not_null
+
+    - name: longitude
+      description: "Longitude of the weather location."
+      tests:
+        - not_null
+
+    - name: loaded_at
+      description: "Timestamp when the row was loaded into the warehouse."
+      tests:
+        - not_null

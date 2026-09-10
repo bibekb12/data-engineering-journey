@@ -11,4 +11,6 @@ models:
   de_batch_etl:
     staging:
       +materialized: view
-      +schema: analytics
+      
+    marts:
+      +materialized: table
