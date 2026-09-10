@@ -1,0 +1,14 @@
+name: de_batch_etl
+version: "1.0.0"
+config-version: 2
+
+profile: de_batch_etl
+
+model-paths: ["models"]
+test-paths: ["tests"]
+
+models:
+  de_batch_etl:
+    staging:
+      +materialized: view
+      +schema: analytics
