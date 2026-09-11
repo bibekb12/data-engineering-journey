@@ -1,7 +1,6 @@
-Batch ETL Pipeline with Airflow, PostgreSQL and dbt
-Overview
+# Batch ETL Pipeline with Airflow, PostgreSQL and dbt Overview
 
-This project is a small but production-oriented batch data pipeline built around weather data.
+## This project is a small but production-oriented batch data pipeline built around weather data.
 
 The pipeline pulls weather observations from an external API, saves the raw data, loads it into PostgreSQL, transforms it with dbt, and runs data-quality checks before considering the pipeline successful.
 
@@ -17,69 +16,74 @@ Git for version control
 The project is intentionally small in terms of data volume. The focus is on building the pipeline correctly: separating responsibilities, handling failures, preventing duplicate records, and making the workflow reproducible.
 
 Architecture
-                  Weather API
-                       |
-                       v
-              +------------------+
-              | Python Extractor  |
-              | API + cleaning    |
-              +---------+---------+
-                        |
-                        v
-              weather_raw.parquet
-                        |
-                        v
-              +------------------+
-              |   PostgreSQL     |
-              |   raw.weather    |
-              +---------+---------+
-                        |
-                        v
-              +------------------+
-              |   dbt staging    |
-              |   stg_weather    |
-              +---------+---------+
-                        |
-                        v
-              +------------------+
-              |    dbt mart      |
-              | daily_weather    |
-              +---------+---------+
-                        |
-                        v
-              +------------------+
-              |   dbt tests      |
-              |   16 checks      |
-              +------------------+
+```
+                         Weather API
+                              |
+                              v
+                   +----------------------+
+                   |   Python Extractor   |
+                   |   API + cleaning     |
+                   +----------+-----------+
+                              |
+                              v
+                   weather_raw.parquet
+                              |
+                              v
+                   +----------------------+
+                   |     PostgreSQL       |
+                   |     raw.weather      |
+                   +----------+-----------+
+                              |
+                              v
+                   +----------------------+
+                   |     dbt staging      |
+                   |     stg_weather       |
+                   +----------+-----------+
+                              |
+                              v
+                   +----------------------+
+                   |      dbt mart        |
+                   |   daily_weather      |
+                   +----------+-----------+
+                              |
+                              v
+                   +----------------------+
+                   |     dbt tests        |
+                   |      16 checks        |
+                   +----------------------+
 
-        Apache Airflow orchestrates the workflow
+```
+### Apache Airflow orchestrates the workflow
 
+                                   Airflow Workflow
+                                       extract
+                                          |
+                                          v
+                                       load_raw
+                                          |
+                                          v
+                                       dbt_run
+                                          |
+                                          v
+                                       dbt_test
 
-The Airflow workflow is:
-
-extract
-   ↓
-load_raw
-   ↓
-dbt_run
-   ↓
-dbt_test
-
-Why I built it this way
+### Why I Built It This Way
 
 One of the main goals of this project was to understand the difference between data processing and workflow orchestration.
 
-Python is responsible for extracting and preparing the API data.
+Each tool has a specific responsibility:
 
-PostgreSQL stores the data.
+Component	Responsibility
+Python	Extract and prepare API data
+PostgreSQL	Store raw and analytical data
+dbt	Transform data and run data-quality tests
+Airflow	Orchestrate the workflow
+Docker Compose	Provide the local infrastructure
+Git	Version control
 
-dbt is responsible for SQL transformations and data-quality tests.
+This separation makes the pipeline easier to understand, maintain, test, and extend than putting the entire process into one large Python script.
 
-Airflow coordinates everything and determines the order in which the tasks run.
-
-This separation makes the pipeline easier to understand and maintain than putting the entire process into one large Python script.
-
-Data flow
+Data Flow
 
 The extraction task requests weather observations for a configured latitude and longitude.
 
@@ -93,7 +97,7 @@ The load task reads that file and inserts the observations into:
 raw.weather
 
 
-The raw table intentionally contains the observations before the analytical transformations are applied.
+The raw table intentionally contains the observations before analytical transformations are applied.
 
 dbt then creates the staging model:
 
@@ -105,32 +109,72 @@ and the daily analytical table:
 analytics.daily_weather
 
 
-The final table contains daily weather summaries such as minimum temperature, maximum temperature, average temperature, and observation count.
+The final table contains daily weather summaries such as:
 
-Airflow orchestration
+Minimum temperature
+Maximum temperature
+Average temperature
+Observation count
+Weather date
+Latitude
+Longitude
+Airflow Orchestration
 
-Airflow is responsible for running the pipeline in the correct order.
+Apache Airflow is responsible for running the pipeline in the correct order.
 
 The DAG contains four tasks:
-
+```
+            extract
+               |
+               v
+            load_raw
+               |
+               v
+            dbt_run
+               |
+               v
+            dbt_test
+```
+### Task Responsibilities
 extract
-   ↓
+
+The extract task calls the weather API, cleans the returned data, and writes the result to a Parquet file.
+
+Weather API
+     |
+     v
+Python extractor
+     |
+     v
+weather_raw.parquet
+
 load_raw
-   ↓
+
+The load_raw task reads the Parquet file and loads the observations into the PostgreSQL raw layer.
+
+weather_raw.parquet
+        |
+        v
+   raw.weather
+
 dbt_run
-   ↓
+
+The dbt_run task executes the dbt models.
+
+It creates:
+
+analytics.stg_weather
+analytics.daily_weather
+
 dbt_test
 
+The final task runs the dbt data-quality tests.
 
-If extraction fails, the downstream tasks do not run.
+If the tests fail, the pipeline is considered unsuccessful.
 
-If loading fails, dbt does not run.
+Failure Handling and Retries
 
-If the dbt tests fail, the pipeline is considered unsuccessful.
-
-This gives the workflow a clear dependency chain instead of treating each script as an independent process.
-
-The DAG also uses retries for temporary failures.
+The DAG is configured with retries for temporary failures:
 
 default_args = {
     "retries": 2,
@@ -140,7 +184,32 @@ default_args = {
 
 This is particularly useful for API-based workloads because temporary network or service failures should not necessarily cause the entire scheduled pipeline to fail permanently.
 
-Configuration and credentials
+The dependency chain also prevents downstream processing when an upstream task fails.
+
+For example:
+
+extract fails
+     |
+     X
+load_raw does not run
+
+
+Similarly:
+
+load_raw fails
+     |
+     X
+dbt_run does not run
+
+
+And:
+
+dbt_test fails
+     |
+     X
+pipeline is considered unsuccessful
+
+Configuration and Credentials
 
 The weather coordinates are stored as Airflow Variables:
 
@@ -152,7 +221,7 @@ The PostgreSQL connection is stored as an Airflow Connection rather than putting
 
 This keeps configuration separate from application logic and avoids hardcoding credentials into source code.
 
-Secrets and local environment configuration are excluded from Git using .gitignore.
+Sensitive configuration and local environment files are excluded from Git using .gitignore.
 
 Idempotency
 
@@ -165,30 +234,36 @@ UNIQUE ("timestamp", latitude, longitude)
 
 This means that the same weather observation cannot be inserted multiple times for the same timestamp and coordinates.
 
-I also verified this against the running database.
+I verified this against the running PostgreSQL database.
 
-Current result:
-
-total_rows     = 168
-unique_rows    = 168
-
+Current Result
+Metric	Result
+Total rows	168
+Unique observations	168
 
 The pipeline was executed repeatedly without increasing the number of unique observations.
 
-This is an important property for batch pipelines because Airflow may retry tasks or a pipeline may be manually rerun after a failure.
+This is an important property for batch pipelines because:
 
-Data quality
+Airflow may retry tasks.
+A pipeline may be manually rerun.
+A scheduled run may need to be recovered after a failure.
+Duplicate records should not accumulate in the raw layer.
+
+The uniqueness constraint provides a database-level safeguard against duplicate observations.
+
+Data Quality
 
 dbt is used not only for transformations but also for data validation.
 
 The project currently contains:
 
-2 models
-16 data tests
-1 source
+dbt component	Count
+Models	2
+Data tests	16
+Sources	1
 
-
-The final test run completed successfully:
+The latest test run completed successfully:
 
 PASS = 16
 WARN = 0
@@ -196,7 +271,18 @@ ERROR = 0
 SKIP = 0
 
 
-The tests currently validate that important fields such as timestamps, coordinates, temperatures, and observation counts are not null.
+The tests currently validate that important fields such as:
+
+Timestamp
+Latitude
+Longitude
+Temperature
+Minimum temperature
+Maximum temperature
+Average temperature
+Observation count
+
+are not null where required.
 
 The tests are executed after the dbt transformations, so a successful pipeline means both the transformation and validation stages completed successfully.
 
@@ -206,20 +292,29 @@ The project uses Docker Compose to run the local infrastructure.
 
 The main services include:
 
-Apache Airflow
+Apache Airflow API server
+Apache Airflow scheduler
+Apache Airflow worker
+Apache Airflow DAG processor
+Apache Airflow triggerer
 PostgreSQL
 Redis
-Airflow scheduler
-Airflow worker
-Airflow API server
-Airflow DAG processor
-Airflow triggerer
 
-This makes the development environment reproducible without requiring Airflow and PostgreSQL to be installed directly on the host machine.
+The current environment uses:
+
+Apache Airflow 3.3.1
+PostgreSQL 16
+Redis 7.2
+dbt 1.12.4
+dbt-postgres 1.11.0
+
+
+Docker Compose makes the development environment reproducible without requiring Airflow and PostgreSQL to be installed directly on the host machine.
 
 The project can therefore be developed and tested as a self-contained local data platform.
 
-Project structure
+### Project Structure
+```
 de-project-01-batch-etl/
 │
 ├── dags/
@@ -246,67 +341,201 @@ de-project-01-batch-etl/
 │
 ├── docs/
 ├── data/
+├── config/
+├── plugins/
 ├── docker-compose.yaml
 ├── .gitignore
 └── README.md
+```
 
+Generated files such as:
 
-Generated files such as Airflow logs, Python cache files, and dbt build artifacts are intentionally excluded from version control.
+Airflow logs
+Python cache files
+dbt target files
+dbt logs
+local Parquet data
 
-Running the project
+are intentionally excluded from version control where appropriate.
 
-Start the services:
-
+Running the Project
+1. Start the Services
 docker compose up -d
 
 
-Check service health:
+Check the service status:
 
 docker compose ps
 
 
-Trigger the Airflow DAG:
+All required services should be running and healthy.
+
+2. Check the Airflow DAG
+
+List the DAG:
+
+docker compose exec airflow-worker \
+  bash -c "airflow dags list | grep batch_etl"
+
+
+List the tasks:
+
+docker compose exec airflow-worker \
+  bash -c "airflow tasks list batch_etl"
+
+
+Expected tasks:
+
+dbt_run
+dbt_test
+extract
+load_raw
+
+3. Trigger the Pipeline
+
+Run the DAG manually:
 
 docker compose exec airflow-worker \
   bash -c "airflow dags trigger batch_etl"
 
 
-The Airflow UI is available at:
+The DAG can also run automatically according to its configured schedule.
+
+The DAG currently uses:
+
+schedule="@daily"
+
+
+with:
+
+catchup=False
+
+4. Access the Airflow UI
+
+The Airflow web interface is available locally at:
 
 http://localhost:8080
 
 
-The DAG can also be scheduled automatically using its configured schedule.
+From the UI, you can inspect:
 
-Verifying the results
+DAG runs
+Task status
+Task logs
+Task dependencies
+Execution history
+Verifying the Results
+Check the Raw Layer
 
-Check the raw layer:
+Run:
 
 docker compose exec postgres \
   psql -U warehouse_user -d warehouse \
   -c "SELECT COUNT(*) AS raw_rows FROM raw.weather;"
 
 
-Check the analytical table:
+Current result:
+
+raw_rows
+--------
+168
+
+Check the Analytical Table
+
+Run:
 
 docker compose exec postgres \
   psql -U warehouse_user -d warehouse \
   -c "SELECT COUNT(*) AS daily_rows FROM analytics.daily_weather;"
 
 
-Run dbt tests:
+Current result:
+
+daily_rows
+----------
+7
+
+Check for Duplicate Observations
+
+Run:
+
+docker compose exec postgres \
+  psql -U warehouse_user -d warehouse \
+  -c "
+SELECT
+    COUNT(*) AS total_rows,
+    COUNT(DISTINCT (timestamp, latitude, longitude)) AS unique_rows
+FROM raw.weather;
+"
+
+
+Current result:
+
+total_rows | unique_rows
+-----------+------------
+168        | 168
+
+
+This confirms that all stored observations are unique according to the defined observation key.
+
+Run dbt Tests
+
+Run:
 
 docker compose exec airflow-worker \
   bash -c "cd /opt/airflow/dbt/de_batch_etl && dbt test --profiles-dir ."
 
 
-A successful run currently produces:
+Expected result:
 
-raw.weather              168 rows
-analytics.daily_weather    7 rows
-dbt tests                 16 passed
+PASS=16
+WARN=0
+ERROR=0
+SKIP=0
+NO-OP=0
+REUSED=0
+TOTAL=16
 
-What I learned
+Current Pipeline Results
+
+The latest successful pipeline run produced:
+
+Layer	Result
+raw.weather	168 rows
+analytics.daily_weather	7 rows
+Unique raw observations	168
+dbt models	2
+dbt tests	16 passed
+dbt warnings	0
+dbt errors	0
+
+The complete workflow successfully executed:
+```
+Weather API
+     |
+     v
+   Extract
+     |
+     v
+Parquet file
+     |
+     v
+  PostgreSQL
+  raw.weather
+     |
+     v
+  dbt staging
+     |
+     v
+  dbt mart
+     |
+     v
+  dbt tests
+     |
+     v
+  SUCCESS
+```
+## What I Learned
 
 The most useful part of this project was seeing how the individual tools fit together.
 
@@ -320,29 +549,127 @@ Python handles the external API interaction and ingestion logic.
 
 Docker provides the infrastructure needed to run the whole system consistently.
 
-I also learned that reliability is more than making the "happy path" work. Retries, logging, idempotency, data validation, configuration management, and clear task dependencies all matter when a pipeline needs to run repeatedly without manual intervention.
+I also learned that reliability is more than making the "happy path" work.
 
-Design decisions
+A production-oriented pipeline needs to consider:
+
+Retries
+Logging
+Idempotency
+Data validation
+Configuration management
+Task dependencies
+Reproducibility
+Failure handling
+
+These features become especially important when a pipeline needs to run repeatedly without manual intervention.
+
+Design Decisions
 Why PostgreSQL?
 
-PostgreSQL provides a realistic relational warehouse environment while remaining simple enough to run locally.
+PostgreSQL provides a realistic relational database environment while remaining simple enough to run locally.
 
-Why dbt?
+It also provides database-level constraints that can protect the raw layer from duplicate observations.
 
-The analytical transformations are SQL-based, making dbt a natural fit. It also provides a structured way to define tests and dependencies between models.
+### Why dbt?
 
+The analytical transformations are SQL-based, making dbt a natural fit.
+
+dbt also provides:
+
+Model dependency management
+Data-quality testing
+SQL-based transformations
+A structured project layout
+Reproducible analytical models
 Why Airflow?
 
-The pipeline contains multiple dependent stages, making it a useful example of workflow orchestration rather than simply running a Python script manually.
+The pipeline contains multiple dependent stages:
+```
+extract
+   |
+   v
+load
+   |
+   v
+transform
+   |
+   v
+test
+```
 
-Why Docker Compose?
+This makes it a useful example of workflow orchestration rather than simply running a Python script manually.
 
-Running Airflow and PostgreSQL locally through Docker makes the project easier to reproduce and avoids requiring a complex host-level installation.
+Airflow provides task dependencies, retries, scheduling, logging, and execution monitoring.
 
-Why keep a raw layer?
+## Why Docker Compose?
 
-The raw layer provides a clear boundary between ingestion and transformation. It also makes it possible to inspect what was loaded before analytical transformations are applied.
+Running Airflow, PostgreSQL, and Redis through Docker makes the project easier to reproduce.
 
-Why enforce uniqueness?
+It also avoids requiring a complex host-level installation of the infrastructure.
 
-Batch pipelines can be rerun and tasks can be retried. A uniqueness constraint protects the raw layer from accumulating duplicate observations.
+### Why Keep a Raw Layer?
+
+The raw layer provides a clear boundary between ingestion and transformation.
+
+It makes it possible to inspect what was loaded before analytical transformations are applied.
+
+The architecture therefore separates:
+```
+Raw data
+   |
+   v
+Staging
+   |
+   v
+Analytics
+```
+
+This makes debugging and future changes easier.
+
+### Why Enforce Uniqueness?
+
+Batch pipelines can be rerun and tasks can be retried.
+
+A uniqueness constraint protects the raw layer from accumulating duplicate observations:
+
+UNIQUE ("timestamp", latitude, longitude)
+
+
+This makes the database itself responsible for enforcing an important data-integrity rule.
+
+Future Improvements
+
+Although the current pipeline works end-to-end, there are several areas that could be improved in a future version:
+
+Add more comprehensive dbt tests such as accepted ranges and uniqueness tests.
+Add incremental dbt models for larger datasets.
+Add structured monitoring and alerting.
+Add CI/CD checks using GitHub Actions.
+Add automated unit tests for the extraction layer.
+Add better API rate-limit handling.
+Add partitioning for larger raw datasets.
+Add a dedicated production secrets-management solution.
+Add data lineage documentation.
+Add dashboards for the analytical weather data.
+Add deployment configuration for a cloud environment.
+
+These improvements would allow the project to evolve from a local learning project into a more production-like data platform.
+
+Conclusion
+
+This project demonstrates a complete batch ETL workflow using a combination of Python, Apache Airflow, PostgreSQL, dbt, Docker, and Git.
+
+The pipeline successfully:
+
+Extracts weather data from an external API.
+Cleans and stores the data as Parquet.
+Loads the data into a PostgreSQL raw layer.
+Prevents duplicate observations using a database constraint.
+Transforms the data using dbt.
+Produces daily analytical weather summaries.
+Validates the transformed data with 16 dbt tests.
+Orchestrates the entire workflow through Airflow.
+Runs the infrastructure through Docker Compose.
+
+The main goal was not to process a huge amount of data, but to understand how the individual components work together to create a reliable and maintainable batch data pipeline.
