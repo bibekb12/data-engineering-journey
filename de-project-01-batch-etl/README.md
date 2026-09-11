@@ -139,7 +139,7 @@ The DAG contains four tasks:
 extract
 
 The extract task calls the weather API, cleans the returned data, and writes the result to a Parquet file.
-
+```
 Weather API
      |
      v
@@ -147,17 +147,17 @@ Python extractor
      |
      v
 weather_raw.parquet
-
-load_raw
+```
+#### load_raw
 
 The load_raw task reads the Parquet file and loads the observations into the PostgreSQL raw layer.
-
+```
 weather_raw.parquet
         |
         v
    raw.weather
-
-dbt_run
+```
+#### dbt_run
 
 The dbt_run task executes the dbt models.
 
@@ -166,7 +166,7 @@ It creates:
 analytics.stg_weather
 analytics.daily_weather
 
-dbt_test
+#### dbt_test
 
 The final task runs the dbt data-quality tests.
 
@@ -175,41 +175,41 @@ If the tests fail, the pipeline is considered unsuccessful.
 Failure Handling and Retries
 
 The DAG is configured with retries for temporary failures:
-
+```
 default_args = {
     "retries": 2,
     "retry_delay": timedelta(minutes=5),
 }
-
+```
 
 This is particularly useful for API-based workloads because temporary network or service failures should not necessarily cause the entire scheduled pipeline to fail permanently.
 
 The dependency chain also prevents downstream processing when an upstream task fails.
 
 For example:
-
+```
 extract fails
      |
      X
 load_raw does not run
-
+```
 
 Similarly:
-
+```
 load_raw fails
      |
      X
 dbt_run does not run
-
+```
 
 And:
-
+```
 dbt_test fails
      |
      X
 pipeline is considered unsuccessful
-
-Configuration and Credentials
+```
+#### Configuration and Credentials
 
 The weather coordinates are stored as Airflow Variables:
 
@@ -223,7 +223,7 @@ This keeps configuration separate from application logic and avoids hardcoding c
 
 Sensitive configuration and local environment files are excluded from Git using .gitignore.
 
-Idempotency
+#### Idempotency
 
 A repeated pipeline run should not create duplicate weather observations.
 
@@ -235,12 +235,12 @@ UNIQUE ("timestamp", latitude, longitude)
 This means that the same weather observation cannot be inserted multiple times for the same timestamp and coordinates.
 
 I verified this against the running PostgreSQL database.
-
+```
 Current Result
 Metric	Result
 Total rows	168
 Unique observations	168
-
+```
 The pipeline was executed repeatedly without increasing the number of unique observations.
 
 This is an important property for batch pipelines because:
@@ -257,19 +257,19 @@ Data Quality
 dbt is used not only for transformations but also for data validation.
 
 The project currently contains:
-
+```
 dbt component	Count
 Models	2
 Data tests	16
 Sources	1
-
+```
 The latest test run completed successfully:
-
+```
 PASS = 16
 WARN = 0
 ERROR = 0
 SKIP = 0
-
+```
 
 The tests currently validate that important fields such as:
 
@@ -291,7 +291,7 @@ Docker
 The project uses Docker Compose to run the local infrastructure.
 
 The main services include:
-
+```
 Apache Airflow API server
 Apache Airflow scheduler
 Apache Airflow worker
@@ -299,15 +299,15 @@ Apache Airflow DAG processor
 Apache Airflow triggerer
 PostgreSQL
 Redis
-
+```
 The current environment uses:
-
+```
 Apache Airflow 3.3.1
 PostgreSQL 16
 Redis 7.2
 dbt 1.12.4
 dbt-postgres 1.11.0
-
+```
 
 Docker Compose makes the development environment reproducible without requiring Airflow and PostgreSQL to be installed directly on the host machine.
 
@@ -359,30 +359,31 @@ local Parquet data
 are intentionally excluded from version control where appropriate.
 
 Running the Project
-1. Start the Services
+### 1. Start the Services
+```
 docker compose up -d
-
+```
 
 Check the service status:
-
+```
 docker compose ps
-
+```
 
 All required services should be running and healthy.
 
-2. Check the Airflow DAG
+### 2. Check the Airflow DAG
 
 List the DAG:
-
+```
 docker compose exec airflow-worker \
   bash -c "airflow dags list | grep batch_etl"
-
+```
 
 List the tasks:
-
+```
 docker compose exec airflow-worker \
   bash -c "airflow tasks list batch_etl"
-
+```
 
 Expected tasks:
 
@@ -391,33 +392,32 @@ dbt_test
 extract
 load_raw
 
-3. Trigger the Pipeline
+### 3. Trigger the Pipeline
 
 Run the DAG manually:
-
+```
 docker compose exec airflow-worker \
   bash -c "airflow dags trigger batch_etl"
-
+```
 
 The DAG can also run automatically according to its configured schedule.
 
 The DAG currently uses:
-
+```
 schedule="@daily"
-
 
 with:
 
 catchup=False
-
-4. Access the Airflow UI
+```
+### 4. Access the Airflow UI
 
 The Airflow web interface is available locally at:
 
 http://localhost:8080
 
 
-From the UI, you can inspect:
+### From the UI, you can inspect:
 
 DAG runs
 Task status
@@ -428,37 +428,37 @@ Verifying the Results
 Check the Raw Layer
 
 Run:
-
+```
 docker compose exec postgres \
   psql -U warehouse_user -d warehouse \
   -c "SELECT COUNT(*) AS raw_rows FROM raw.weather;"
-
+```
 
 Current result:
-
+```
 raw_rows
 --------
 168
-
+```
 Check the Analytical Table
 
 Run:
-
+```
 docker compose exec postgres \
   psql -U warehouse_user -d warehouse \
   -c "SELECT COUNT(*) AS daily_rows FROM analytics.daily_weather;"
-
+```
 
 Current result:
-
+```
 daily_rows
 ----------
 7
-
+```
 Check for Duplicate Observations
 
 Run:
-
+```
 docker compose exec postgres \
   psql -U warehouse_user -d warehouse \
   -c "
@@ -467,24 +467,24 @@ SELECT
     COUNT(DISTINCT (timestamp, latitude, longitude)) AS unique_rows
 FROM raw.weather;
 "
-
-
+```
+```
 Current result:
 
 total_rows | unique_rows
 -----------+------------
 168        | 168
 
-
+```
 This confirms that all stored observations are unique according to the defined observation key.
 
 Run dbt Tests
 
 Run:
-
+```
 docker compose exec airflow-worker \
   bash -c "cd /opt/airflow/dbt/de_batch_etl && dbt test --profiles-dir ."
-
+```
 
 Expected result:
 
@@ -499,7 +499,7 @@ TOTAL=16
 Current Pipeline Results
 
 The latest successful pipeline run produced:
-
+```
 Layer	Result
 raw.weather	168 rows
 analytics.daily_weather	7 rows
@@ -508,7 +508,7 @@ dbt models	2
 dbt tests	16 passed
 dbt warnings	0
 dbt errors	0
-
+```
 The complete workflow successfully executed:
 ```
 Weather API
@@ -565,7 +565,8 @@ Failure handling
 These features become especially important when a pipeline needs to run repeatedly without manual intervention.
 
 Design Decisions
-Why PostgreSQL?
+
+### Why PostgreSQL?
 
 PostgreSQL provides a realistic relational database environment while remaining simple enough to run locally.
 
@@ -582,7 +583,8 @@ Data-quality testing
 SQL-based transformations
 A structured project layout
 Reproducible analytical models
-Why Airflow?
+
+### Why Airflow?
 
 The pipeline contains multiple dependent stages:
 ```
@@ -638,7 +640,7 @@ UNIQUE ("timestamp", latitude, longitude)
 
 This makes the database itself responsible for enforcing an important data-integrity rule.
 
-Future Improvements
+### Future Improvements
 
 Although the current pipeline works end-to-end, there are several areas that could be improved in a future version:
 
@@ -656,7 +658,7 @@ Add deployment configuration for a cloud environment.
 
 These improvements would allow the project to evolve from a local learning project into a more production-like data platform.
 
-Conclusion
+## Conclusion
 
 This project demonstrates a complete batch ETL workflow using a combination of Python, Apache Airflow, PostgreSQL, dbt, Docker, and Git.
 
