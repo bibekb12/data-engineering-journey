@@ -68,15 +68,17 @@ def main():
         runner="DataflowRunner",
         project=PROJECT_ID,
         region="asia-southeast1",
-        worker_zone="asia-southeast1-b",
+        worker_region="asia-southeast1",
         temp_location=f"{BUCKET}/dataflow/temp",
         staging_location=f"{BUCKET}/dataflow/staging",
         service_account_email=(
             "de-etl-pipeline@de-project-02-gcp-warehouse.iam.gserviceaccount.com"
         ),
-        job_name="weather-etl-v4",
+        job_name="weather-etl-v7",
         save_main_session=True,
         worker_machine_type="e2-standard-2",
+        num_workers=1,
+        max_num_workers=1,
     )
 
     table = f"{PROJECT_ID}:weather_warehouse.fact_weather"
