@@ -2,7 +2,6 @@
 
 **Starting point:** Basic Python  
 **Target:** Job-ready Data Engineer, GCP-focused  
-**Estimated timeline:** 6–8 months at 10–15 hrs/week (adjust to your pace)
 
 This document is both your **study plan** and your **GitHub portfolio blueprint**. The core idea: hiring managers don't hire based on courses finished — they hire based on projects that prove you can build and reason about real pipelines. So every phase below pairs "learn X" with "ship a project that uses X," pushed to GitHub as you go.
 
@@ -13,12 +12,9 @@ This document is both your **study plan** and your **GitHub portfolio blueprint*
 Don't cram everything into one repo. Use **one hub repo + separate project repos**. This is what an experienced recruiter/tech lead expects to see on a profile.
 
 ```
-github.com/bibekb12/
-│
-├── data-engineering-journey/     ← THE HUB REPO (this file lives here)
+data-engineering-journey/     
 │   ├── README.md                 ← Your roadmap, progress tracker, links to all projects
-│   ├── notes/                    ← Phase-by-phase learning notes (markdown)
-│   └── resources.md              ← Curated links you actually used
+│   └── resources.md              ← Curated links used
 │
 ├── de-project-01-batch-etl/            ← Phase 4 project
 ├── de-project-02-gcp-warehouse/        ← Phase 5 project
