@@ -354,7 +354,7 @@ These are areas for continued development:
 
 ## 10. Learning Roadmap
 
-This portfolio follows a structured learning path from foundational skills to production-grade pipelines. See the full [Roadmap](Roadmap.md) for the detailed phase-by-phase plan.
+This portfolio follows a structured learning path from foundational skills to production-grade pipelines. See the full [Roadmap](ROADMAP.md) for the detailed phase-by-phase plan.
 
 ---
 
