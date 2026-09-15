@@ -7,7 +7,7 @@ spark = (
     .getOrCreate()
 )
 
-spark.sparkContext.setLogLevel("Warn")
+spark.sparkContext.setLogLevel("WARN")
 
 file_path = "data/raw/yellow_tripdata_2025-01.parquet"
 

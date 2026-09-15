@@ -27,7 +27,7 @@ print(f"Pandas time: {pandas_time:.2f} seconds")
 print("Top 10 Pandas results:")
 print(pandas_result.head(10))
 
-# Spart
+# Spark
 
 print()
 print("=== Spark Benchmark ===")
