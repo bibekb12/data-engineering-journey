@@ -208,7 +208,7 @@ data-engineering-journey/
 │
 ├── Roadmap.md                       # Learning roadmap and career plan
 ├── requirements.txt                 # Python dependencies
-└── README.md                        # ← You are here
+└── README.md                        # Documentation
 ```
 
 ---
